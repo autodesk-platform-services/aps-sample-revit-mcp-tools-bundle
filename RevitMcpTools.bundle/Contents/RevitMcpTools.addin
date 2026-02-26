@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+	<AddIn Type="DBApplication">
+		<Name>Revit MCP Tools</Name>
+		<Assembly>.\RevitMcpTools.dll</Assembly>
+		<AddInId>442A82A4-13DD-4500-84B1-AA22C20E2319</AddInId>
+		<FullClassName>RevitMcpTools.RevitMcpToolsHandler</FullClassName>
+		<Description>"A set of Revit tools to be called by Automation API."</Description>
+		<VendorId>Autodesk</VendorId>
+		<VendorDescription>Autodesk</VendorDescription>
+	</AddIn>
+</RevitAddIns>

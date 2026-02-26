@@ -1,0 +1,7 @@
+{
+  "enableWorksharing": true,
+  "accountId": "00000000-0000-0000-0000-000000000000",
+  "projectId": "00000000-0000-0000-0000-000000000000",
+  "folderId": "urn:adsk.wipprod:fs.folder:co.example",
+  "modelName": "NewModel.rvt"
+}
