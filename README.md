@@ -55,9 +55,8 @@ This AppBundle is deployed to Autodesk Automation API for Revit and invoked by t
   - [Creating Custom Tools](#creating-custom-tools)
   - [Registering Tools](#registering-tools)
 - [Sample Tools](#sample-tools)
-- [Integration with MCP Revit Automation](#integration-with-mcp-revit-automation)
 - [Development](#development)
-- [License](#license)
+- [Integration with MCP Revit Automation](#integration-with-mcp-revit-automation)
 
 ## Overview
 
