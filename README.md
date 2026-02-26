@@ -331,10 +331,6 @@ This AppBundle is designed to work seamlessly with the **[MCP Revit Automation](
 5. **MCP Server**: Reports success back to the AI assistant
 6. **User**: Receives confirmation and can continue with next request
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
 ---
 
 **Note:** This AppBundle is designed for use with Autodesk Automation API for Revit 2026. It requires:
