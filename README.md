@@ -338,3 +338,7 @@ This AppBundle is designed to work seamlessly with the **[MCP Revit Automation](
 - Proper authentication and access to Autodesk Construction Cloud or BIM 360 projects
 
 This is a sample project intended as a reference implementation. Feel free to clone or fork it and adapt it to your specific needs.
+
+---
+
+Made with ❤️ for the AEC community | Vibe-coded with GitHub Copilot
