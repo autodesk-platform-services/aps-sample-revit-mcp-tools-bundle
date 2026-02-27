@@ -5,7 +5,7 @@
 [![.NET](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/)
 [![C#](https://img.shields.io/badge/C%23-12.0-239120)](https://docs.microsoft.com/en-us/dotnet/csharp/)
 
-A sample AppBundle for Automation API for Revit 2026 that executes custom tools on Revit Cloud Models. Designed to work with **[MCP Revit Automation]([https://github.com/yourusername/mcp-revit-automation](https://github.com/autodesk-platform-services/aps-sample-mcp-server-revit-automation))** - allowing AI assistants like Claude or VS Code Copilot to orchestrate Revit operations through natural language.
+A sample AppBundle for Automation API for Revit 2026 that executes custom tools on Revit Cloud Models. Designed to work with **[MCP Revit Automation](https://github.com/autodesk-platform-services/aps-sample-mcp-server-revit-automation)** - allowing AI assistants like Claude or VS Code Copilot to orchestrate Revit operations through natural language.
 
 ---
 
