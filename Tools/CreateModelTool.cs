@@ -56,7 +56,7 @@ namespace RevitMcpTools.Tools
                 newDoc.SaveAsCloudModel(inputData.AccountId, inputData.ProjectId, inputData.FolderId, inputData.ModelName);
                 Console.WriteLine($"*** Successfully created model: {inputData.ModelName} ***");
 
-                newDoc.Close(false);
+                doc = newDoc;
 
                 return true;
             }
