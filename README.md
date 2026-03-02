@@ -100,7 +100,7 @@ This AppBundle abstracts away the complexity of Revit API operations, allowing A
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/RevitMcpTools.git
+git clone https://github.com/autodesk-platform-services/aps-sample-revit-mcp-tools-bundle.git
 cd RevitMcpTools
 ```
 
@@ -315,7 +315,7 @@ RevitMcpTools/
 
 ## Integration with MCP Revit Automation
 
-This AppBundle is designed to work seamlessly with the **[MCP Revit Automation](https://github.com/yourusername/mcp-revit-automation)** server, which:
+This AppBundle is designed to work seamlessly with the **[MCP Revit Automation](https://github.com/autodesk-platform-services/aps-sample-mcp-server-revit-automation.git)** server, which:
 
 - Exposes tools to AI assistants via the Model Context Protocol (MCP)
 - Translates natural language requests into WorkItem configurations
