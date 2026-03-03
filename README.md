@@ -340,5 +340,11 @@ This AppBundle is designed to work seamlessly with the **[MCP Revit Automation](
 This is a sample project intended as a reference implementation. Feel free to clone or fork it and adapt it to your specific needs.
 
 ---
+## License
+
+This sample is licensed under the terms of the [MIT License](http://opensource.org/licenses/MIT).
+Please see the [LICENSE](LICENSE) file for full details.
+
+---
 
 Made with ❤️ for the AEC community | Vibe-coded with GitHub Copilot
