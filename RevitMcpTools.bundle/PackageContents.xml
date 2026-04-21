@@ -3,8 +3,8 @@
 	<Components Description="Revit MCP Tools for Automation API">
 		<RuntimeRequirements OS="Win64"
 							 Platform="Revit"
-							 SeriesMin="R2026"
-							 SeriesMax="R2026" />
+							 SeriesMin="R2027"
+							 SeriesMax="R2027" />
 		<ComponentEntry AppName="RevitMcpTools"
 						Version="1.0.0"
 						ModuleName="./Contents/RevitMcpTools.addin"
