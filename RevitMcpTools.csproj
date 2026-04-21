@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Autodesk.Forge.DesignAutomation.Revit" Version="2026.0.0" />
+    <PackageReference Include="Autodesk.Forge.DesignAutomation.Revit" Version="2027.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="Revit_All_Main_Versions_API_x64" Version="2026.0.0" />
   </ItemGroup>

@@ -1,11 +1,11 @@
 ﻿# Revit MCP Tools for APS Automation API
 
 [![APS Automation API](https://img.shields.io/badge/Design%20Automation-v3-green.svg)](https://aps.autodesk.com/developer/overview/automation-api)
-[![Revit API-2026](https://img.shields.io/badge/Revit-2026-lightgrey.svg)](https://aps.autodesk.com/developer/overview/revit)
+[![Revit API-2027](https://img.shields.io/badge/Revit-2027-lightgrey.svg)](https://aps.autodesk.com/developer/overview/revit)
 [![.NET](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/)
 [![C#](https://img.shields.io/badge/C%23-12.0-239120)](https://docs.microsoft.com/en-us/dotnet/csharp/)
 
-A sample AppBundle for Automation API for Revit 2026 that executes custom tools on Revit Cloud Models. Designed to work with **[MCP Revit Automation](https://github.com/autodesk-platform-services/aps-sample-mcp-server-revit-automation)** - allowing AI assistants like Claude or VS Code Copilot to orchestrate Revit operations through natural language.
+A sample AppBundle for Automation API for Revit 2027 that executes custom tools on Revit Cloud Models. Designed to work with **[MCP Revit Automation](https://github.com/autodesk-platform-services/aps-sample-mcp-server-revit-automation)** - allowing AI assistants like Claude or VS Code Copilot to orchestrate Revit operations through natural language.
 
 ---
 
@@ -60,7 +60,7 @@ This AppBundle is deployed to Autodesk Automation API for Revit and invoked by t
 
 ## Overview
 
-**Revit MCP Tools** is an AppBundle that provides a plugin-based architecture for executing automated operations on Revit Cloud Models. When deployed to Automation API for Revit 2026, it can be invoked by the **MCP Revit Automation** server, enabling AI assistants to perform Revit operations through natural language commands.
+**Revit MCP Tools** is an AppBundle that provides a plugin-based architecture for executing automated operations on Revit Cloud Models. When deployed to Automation API for Revit 2027, it can be invoked by the **MCP Revit Automation** server, enabling AI assistants to perform Revit operations through natural language commands.
 
 ### Problem It Solves
 
@@ -129,7 +129,7 @@ When creating an Activity for this AppBundle, use the following configuration:
   "activity": {
     "id": "RevitMcpToolsActivity",
     "description": "Revit MCP Tools for Automation API",
-    "engine": "Autodesk.Revit+2026",
+    "engine": "Autodesk.Revit+2027",
     "alias": "dev",
     "commandLine": [
       "$(engine.path)\\RevitCoreConsole.exe /al \"$(appbundles[RevitMcpTools].path)\""
@@ -332,8 +332,8 @@ This AppBundle is designed to work seamlessly with the **[MCP Revit Automation](
 
 ---
 
-**Note:** This AppBundle is designed for use with Autodesk Automation API for Revit 2026. It requires:
-- Deployment to Automation API as an AppBundle (targeting Revit 2026)
+**Note:** This AppBundle is designed for use with Autodesk Automation API for Revit 2027. It requires:
+- Deployment to Automation API as an AppBundle (targeting Revit 2027)
 - An MCP server (like MCP Revit Automation) to orchestrate work items
 - Proper authentication and access to Autodesk Construction Cloud or BIM 360 projects
 
