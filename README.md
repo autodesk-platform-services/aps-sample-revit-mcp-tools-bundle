@@ -2,8 +2,8 @@
 
 [![APS Automation API](https://img.shields.io/badge/Design%20Automation-v3-green.svg)](https://aps.autodesk.com/developer/overview/automation-api)
 [![Revit API-2027](https://img.shields.io/badge/Revit-2027-lightgrey.svg)](https://aps.autodesk.com/developer/overview/revit)
-[![.NET](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/)
-[![C#](https://img.shields.io/badge/C%23-12.0-239120)](https://docs.microsoft.com/en-us/dotnet/csharp/)
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
+[![C#](https://img.shields.io/badge/C%23-14.0-239120?logo=csharp)](https://docs.microsoft.com/en-us/dotnet/csharp/)
 
 A sample AppBundle for Automation API for Revit 2027 that executes custom tools on Revit Cloud Models. Designed to work with **[MCP Revit Automation](https://github.com/autodesk-platform-services/aps-sample-mcp-server-revit-automation)** - allowing AI assistants like Claude or VS Code Copilot to orchestrate Revit operations through natural language.
 
@@ -84,7 +84,7 @@ This AppBundle abstracts away the complexity of Revit API operations, allowing A
 
 - **🤖 AI Assistant Ready**: Designed to be invoked by MCP servers and AI assistants
 - **🔧 Plugin Architecture**: Easy registration of custom tools via attributes
-- **☁️ Cloud Model Support**: Seamless opening and saving of ACC/BIM 360 models
+- **☁️ Cloud Model Support**: Seamless opening and saving of Autodesk Forma models
 - **🔄 Worksharing Aware**: Automatically handles workshared vs. non-workshared models
 - **⚙️ JSON Configuration**: Simple JSON-based configuration for model and tool selection
 - **🏗️ Builder Pattern**: Fluent API for setting up the toolbox
@@ -93,7 +93,7 @@ This AppBundle abstracts away the complexity of Revit API operations, allowing A
 
 ## Prerequisites
 
-- .NET 8.0 SDK
+- .NET 10.0 SDK
 
 ## Installation
 
@@ -180,8 +180,8 @@ To open and process a Revit Cloud Model, the following configuration is required
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `region` | string | ACC/BIM 360 region (e.g., "US", "EMEA") |
-| `projectGuid` | string | GUID of the ACC/BIM 360 project |
+| `region` | string | Forma region (e.g., "US", "EMEA") |
+| `projectGuid` | string | GUID of the Forma project |
 | `modelGuid` | string | GUID of the Revit model |
 | `toolName` | string | Name of the tool to execute (matches tool attribute) |
 | `save` | boolean | Whether to save the model after tool execution |
@@ -335,7 +335,7 @@ This AppBundle is designed to work seamlessly with the **[MCP Revit Automation](
 **Note:** This AppBundle is designed for use with Autodesk Automation API for Revit 2027. It requires:
 - Deployment to Automation API as an AppBundle (targeting Revit 2027)
 - An MCP server (like MCP Revit Automation) to orchestrate work items
-- Proper authentication and access to Autodesk Construction Cloud or BIM 360 projects
+- Proper authentication and access to Autodesk Forma projects
 
 This is a sample project intended as a reference implementation. Feel free to clone or fork it and adapt it to your specific needs.
 
