@@ -134,7 +134,7 @@ namespace RevitMcpTools.Tools
             }
         }
 
-        private bool RemoveLink(Document doc, string linkName)
+        private static bool RemoveLink(Document doc, string linkName)
         {
             RevitLinkType linkType = new FilteredElementCollector(doc)
                 .OfClass(typeof(RevitLinkType))
@@ -163,10 +163,10 @@ namespace RevitMcpTools.Tools
             public string ProjectGuid { get; set; }
 
             [JsonProperty(PropertyName = "linksToAdd")]
-            public List<LinkInfo> LinksToAdd { get; set; } = new();
+            public List<LinkInfo> LinksToAdd { get; set; } = [];
 
             [JsonProperty(PropertyName = "linksToRemove")]
-            public List<LinkInfo> LinksToRemove { get; set; } = new();
+            public List<LinkInfo> LinksToRemove { get; set; } = [];
 
             public static LinkModelsInputData Parse(string jsonPath)
             {
