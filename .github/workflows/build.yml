@@ -1,0 +1,45 @@
+name: Build AppBundle
+
+on:
+  workflow_call:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore RevitMcpTools.csproj
+
+      - name: Build
+        run: dotnet build RevitMcpTools.csproj -c Release --no-restore
+
+      - name: Publish
+        run: dotnet publish RevitMcpTools.csproj -c Release --no-build -o ./publish
+
+      - name: Assemble bundle
+        shell: pwsh
+        run: |
+          $bundleDir = "artifact/RevitMcpTools.bundle"
+          New-Item -ItemType Directory -Path "$bundleDir/Contents" -Force
+          Copy-Item "RevitMcpTools.bundle/PackageContents.xml" "$bundleDir/"
+          Copy-Item "RevitMcpTools.bundle/Contents/RevitMcpTools.addin" "$bundleDir/Contents/"
+          Copy-Item "./publish/RevitMcpTools.dll" "$bundleDir/Contents/"
+          Copy-Item "./publish/Newtonsoft.Json.dll" "$bundleDir/Contents/"
+
+      - name: Create zip
+        shell: pwsh
+        run: Compress-Archive -Path "artifact/RevitMcpTools.bundle" -DestinationPath "RevitMcpTools.bundle.zip"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: appbundle
+          path: RevitMcpTools.bundle.zip
