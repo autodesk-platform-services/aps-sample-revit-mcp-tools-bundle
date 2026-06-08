@@ -1,0 +1,148 @@
+name: Deploy AppBundle
+
+on:
+  push:
+    branches: [main, dev]
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'production' || 'development' }}
+    env:
+      APS_CLIENT_ID: ${{ secrets.APS_CLIENT_ID }}
+      APS_CLIENT_SECRET: ${{ secrets.APS_CLIENT_SECRET }}
+      DA_BASE_URL: https://developer.api.autodesk.com/da/us-east/v3
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: appbundle
+
+      - name: Determine alias
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "ALIAS=prod" >> "$GITHUB_ENV"
+          else
+            echo "ALIAS=dev" >> "$GITHUB_ENV"
+          fi
+
+      - name: Get APS access token
+        run: |
+          RESPONSE=$(curl -s -X POST \
+            "https://developer.api.autodesk.com/authentication/v2/token" \
+            -H "Authorization: Basic $(printf '%s' "$APS_CLIENT_ID:$APS_CLIENT_SECRET" | base64 -w 0)" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "grant_type=client_credentials&scope=code:all")
+          TOKEN=$(echo "$RESPONSE" | jq -r '.access_token')
+          if [ "$TOKEN" = "null" ] || [ -z "$TOKEN" ]; then
+            echo "::error::Failed to get access token"
+            echo "$RESPONSE" | jq .
+            exit 1
+          fi
+          echo "::add-mask::$TOKEN"
+          echo "APS_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+
+      - name: Get APS app nickname
+        run: |
+          NICKNAME=$(curl -s -X GET \
+            "$DA_BASE_URL/forgeapps/me" \
+            -H "Authorization: Bearer $APS_TOKEN" | jq -r '.nickname')
+          if [ "$NICKNAME" = "null" ] || [ -z "$NICKNAME" ]; then
+            echo "::error::Failed to get app nickname"
+            exit 1
+          fi
+          echo "NICKNAME=$NICKNAME" >> "$GITHUB_ENV"
+
+      - name: Check if AppBundle exists
+        run: |
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "$DA_BASE_URL/appbundles/RevitMcpTools" \
+            -H "Authorization: Bearer $APS_TOKEN")
+          echo "APPBUNDLE_STATUS=$HTTP_STATUS" >> "$GITHUB_ENV"
+
+      - name: Create or version AppBundle
+        run: |
+          if [ "$APPBUNDLE_STATUS" = "404" ]; then
+            echo "Creating new AppBundle..."
+            RESPONSE=$(curl -s -X POST \
+              "$DA_BASE_URL/appbundles" \
+              -H "Authorization: Bearer $APS_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"id\":\"RevitMcpTools\",\"engine\":\"Autodesk.Revit+2027\",\"description\":\"deploy $GITHUB_SHA\"}")
+          else
+            echo "Creating new AppBundle version..."
+            RESPONSE=$(curl -s -X POST \
+              "$DA_BASE_URL/appbundles/RevitMcpTools/versions" \
+              -H "Authorization: Bearer $APS_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"engine\":\"Autodesk.Revit+2027\",\"description\":\"deploy $GITHUB_SHA\"}")
+          fi
+
+          VERSION=$(echo "$RESPONSE" | jq -r '.version')
+          UPLOAD_URL=$(echo "$RESPONSE" | jq -r '.uploadParameters.endpointURL')
+          FORM_DATA=$(echo "$RESPONSE" | jq -c '.uploadParameters.formData')
+
+          if [ "$VERSION" = "null" ] || [ "$UPLOAD_URL" = "null" ]; then
+            echo "::error::Failed to create AppBundle version"
+            echo "$RESPONSE" | jq .
+            exit 1
+          fi
+
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "UPLOAD_URL=$UPLOAD_URL" >> "$GITHUB_ENV"
+          echo "FORM_DATA=$FORM_DATA" >> "$GITHUB_ENV"
+
+      - name: Upload zip to S3
+        run: |
+          CURL_ARGS=()
+          while IFS='=' read -r key value; do
+            CURL_ARGS+=("-F" "$key=$value")
+          done < <(echo "$FORM_DATA" | jq -r 'to_entries[] | .key + "=" + .value')
+
+          CURL_ARGS+=("-F" "file=@RevitMcpTools.bundle.zip")
+
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST "$UPLOAD_URL" \
+            "${CURL_ARGS[@]}")
+
+          if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
+            echo "::error::S3 upload failed with HTTP $HTTP_STATUS"
+            exit 1
+          fi
+          echo "Upload successful (HTTP $HTTP_STATUS)"
+
+      - name: Create or update alias
+        run: |
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X PATCH "$DA_BASE_URL/appbundles/RevitMcpTools/aliases/$ALIAS" \
+            -H "Authorization: Bearer $APS_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"version\":$VERSION}")
+
+          if [ "$HTTP_STATUS" = "404" ]; then
+            echo "Alias does not exist, creating..."
+            curl -s -X POST \
+              "$DA_BASE_URL/appbundles/RevitMcpTools/aliases" \
+              -H "Authorization: Bearer $APS_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"id\":\"$ALIAS\",\"version\":$VERSION}" | jq .
+          elif [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
+            echo "::error::Failed to update alias (HTTP $HTTP_STATUS)"
+            exit 1
+          else
+            echo "Alias updated successfully"
+          fi
+
+      - name: Log AppBundle ID
+        run: |
+          APPBUNDLE_ID="$NICKNAME.RevitMcpTools+$ALIAS"
+          echo "## Deploy Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **AppBundle:** \`$APPBUNDLE_ID\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Version:** $VERSION" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Alias:** $ALIAS" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Commit:** $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
