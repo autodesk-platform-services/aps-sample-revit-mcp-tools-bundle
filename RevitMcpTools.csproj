@@ -1,19 +1,34 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <RevitYear Condition="'$(RevitYear)' == ''">2027</RevitYear>
+    <TargetFramework Condition="'$(RevitYear)' == '2027'">net10.0</TargetFramework>
+    <TargetFramework Condition="'$(RevitYear)' != '2027'">net8.0</TargetFramework>
+    <DefineConstants>$(DefineConstants);REVIT$(RevitYear)</DefineConstants>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(RevitYear)' == '2026'">
+    <PackageReference Include="Autodesk.Forge.DesignAutomation.Revit" Version="2026.0.0">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="Revit_All_Main_Versions_API_x64" Version="2026.0.0">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RevitYear)' == '2027'">
     <PackageReference Include="Autodesk.Forge.DesignAutomation.Revit" Version="2027.0.0">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageReference Include="Revit_All_Main_Versions_API_x64" Version="2027.0.0">
+    <PackageReference Include="Revit_All_Main_Versions_API_x64" Version="2027.0.2">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
   <ItemGroup>

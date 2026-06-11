@@ -2,6 +2,15 @@ name: Build AppBundle
 
 on:
   workflow_call:
+    inputs:
+      revit-year:
+        description: 'Revit API year, e.g. 2026'
+        required: true
+        type: string
+      dotnet-version:
+        description: 'dotnet SDK version, e.g. 8.0.x'
+        required: true
+        type: string
 
 jobs:
   build:
@@ -13,16 +22,16 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: ${{ inputs.dotnet-version }}
 
       - name: Restore
-        run: dotnet restore RevitMcpTools.csproj
+        run: dotnet restore RevitMcpTools.csproj /p:RevitYear=${{ inputs.revit-year }}
 
       - name: Build
-        run: dotnet build RevitMcpTools.csproj -c Release --no-restore
+        run: dotnet build RevitMcpTools.csproj -c Release --no-restore /p:RevitYear=${{ inputs.revit-year }}
 
       - name: Publish
-        run: dotnet publish RevitMcpTools.csproj -c Release --no-build -o ./publish
+        run: dotnet publish RevitMcpTools.csproj -c Release -o ./publish /p:RevitYear=${{ inputs.revit-year }}
 
       - name: Assemble bundle
         shell: pwsh
@@ -30,6 +39,7 @@ jobs:
           $bundleDir = "artifact/RevitMcpTools.bundle"
           New-Item -ItemType Directory -Path "$bundleDir/Contents" -Force
           Copy-Item "RevitMcpTools.bundle/PackageContents.xml" "$bundleDir/"
+          (Get-Content "$bundleDir/PackageContents.xml") -replace 'REVIT_YEAR', '${{ inputs.revit-year }}' | Set-Content "$bundleDir/PackageContents.xml"
           Copy-Item "RevitMcpTools.bundle/Contents/RevitMcpTools.addin" "$bundleDir/Contents/"
           Copy-Item "./publish/RevitMcpTools.dll" "$bundleDir/Contents/"
           Copy-Item "./publish/Newtonsoft.Json.dll" "$bundleDir/Contents/"
@@ -41,5 +51,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: appbundle
+          name: appbundle-${{ inputs.revit-year }}
           path: RevitMcpTools.bundle.zip
