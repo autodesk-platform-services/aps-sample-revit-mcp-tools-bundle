@@ -74,13 +74,18 @@ jobs:
 
       - name: Get APS app nickname
         run: |
-          NICKNAME=$(curl -s -X GET \
+          RESPONSE=$(curl -s -X GET \
             "$DA_BASE_URL/forgeapps/me" \
-            -H "Authorization: Bearer $APS_TOKEN" | jq -r '.nickname')
-          if [ "$NICKNAME" = "null" ] || [ -z "$NICKNAME" ]; then
+            -H "Authorization: Bearer $APS_TOKEN")
+
+          NICKNAME=$(echo "$RESPONSE" | jq -r 'if type=="object" then .nickname elif type=="string" then . else empty end' 2>/dev/null)
+
+          if [ -z "$NICKNAME" ] || [ "$NICKNAME" = "null" ]; then
             echo "::error::Failed to get app nickname"
+            echo "$RESPONSE"
             exit 1
           fi
+
           echo "NICKNAME=$NICKNAME" >> "$GITHUB_ENV"
 
       - name: Check if AppBundle exists
