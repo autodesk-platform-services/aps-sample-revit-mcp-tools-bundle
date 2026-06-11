@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ApplicationPackage>
-	<Components Description="Revit MCP Tools for Automation API">
+	<Components Description="Revit MCP Tools for Revit REVIT_YEAR">
 		<RuntimeRequirements OS="Win64"
 							 Platform="Revit"
-							 SeriesMin="R2027"
-							 SeriesMax="R2027" />
+							 SeriesMin="RREVIT_YEAR"
+							 SeriesMax="RREVIT_YEAR" />
 		<ComponentEntry AppName="RevitMcpTools"
 						Version="1.0.0"
 						ModuleName="./Contents/RevitMcpTools.addin"
