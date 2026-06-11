@@ -88,38 +88,44 @@ jobs:
 
           echo "NICKNAME=$NICKNAME" >> "$GITHUB_ENV"
 
-      - name: Check if AppBundle exists
-        run: |
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            "$DA_BASE_URL/appbundles/$APPBUNDLE_NAME" \
-            -H "Authorization: Bearer $APS_TOKEN")
-          echo "APPBUNDLE_STATUS=$HTTP_STATUS" >> "$GITHUB_ENV"
-
       - name: Create or version AppBundle
         run: |
-          if [ "$APPBUNDLE_STATUS" = "404" ]; then
-            echo "Creating new AppBundle..."
-            RESPONSE=$(curl -s -X POST \
-              "$DA_BASE_URL/appbundles" \
-              -H "Authorization: Bearer $APS_TOKEN" \
-              -H "Content-Type: application/json" \
-              -d "{\"id\":\"$APPBUNDLE_NAME\",\"engine\":\"$ENGINE\",\"description\":\"deploy $GITHUB_SHA\"}")
-          else
-            echo "Creating new AppBundle version..."
-            RESPONSE=$(curl -s -X POST \
+          # Create-first: POST /appbundles creates the bundle. If it already
+          # exists DA returns 409, in which case we POST a new version instead.
+          # (A GET-existence probe is unreliable here: DA can answer 400 for a
+          # not-yet-created bundle, which previously sent us down the wrong path.)
+          BODY=$(mktemp)
+          STATUS=$(curl -s -o "$BODY" -w "%{http_code}" -X POST \
+            "$DA_BASE_URL/appbundles" \
+            -H "Authorization: Bearer $APS_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"id\":\"$APPBUNDLE_NAME\",\"engine\":\"$ENGINE\",\"description\":\"deploy $GITHUB_SHA\"}")
+
+          if [ "$STATUS" = "409" ]; then
+            echo "AppBundle exists, creating new version..."
+            STATUS=$(curl -s -o "$BODY" -w "%{http_code}" -X POST \
               "$DA_BASE_URL/appbundles/$APPBUNDLE_NAME/versions" \
               -H "Authorization: Bearer $APS_TOKEN" \
               -H "Content-Type: application/json" \
               -d "{\"engine\":\"$ENGINE\",\"description\":\"deploy $GITHUB_SHA\"}")
+          else
+            echo "Creating new AppBundle..."
           fi
 
-          VERSION=$(echo "$RESPONSE" | jq -r '.version')
-          UPLOAD_URL=$(echo "$RESPONSE" | jq -r '.uploadParameters.endpointURL')
-          FORM_DATA=$(echo "$RESPONSE" | jq -c '.uploadParameters.formData')
+          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 300 ]; then
+            echo "::error::Failed to create AppBundle/version (HTTP $STATUS)"
+            cat "$BODY"
+            exit 1
+          fi
 
-          if [ "$VERSION" = "null" ] || [ "$UPLOAD_URL" = "null" ]; then
-            echo "::error::Failed to create AppBundle version"
-            echo "$RESPONSE" | jq .
+          RESPONSE=$(cat "$BODY")
+          VERSION=$(echo "$RESPONSE" | jq -r '.version // empty')
+          UPLOAD_URL=$(echo "$RESPONSE" | jq -r '.uploadParameters.endpointURL // empty')
+          FORM_DATA=$(echo "$RESPONSE" | jq -c '.uploadParameters.formData // empty')
+
+          if [ -z "$VERSION" ] || [ -z "$UPLOAD_URL" ] || [ -z "$FORM_DATA" ]; then
+            echo "::error::AppBundle response missing version or upload parameters"
+            echo "$RESPONSE" | jq . || echo "$RESPONSE"
             exit 1
           fi
 
