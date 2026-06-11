@@ -6,22 +6,47 @@ on:
 
 jobs:
   build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - revit-year: "2026"
+            dotnet-version: "8.0.x"
+            engine: "Autodesk.Revit+2026"
+          - revit-year: "2027"
+            dotnet-version: "10.0.x"
+            engine: "Autodesk.Revit+2027"
     uses: ./.github/workflows/build.yml
+    with:
+      revit-year: ${{ matrix.revit-year }}
+      dotnet-version: ${{ matrix.dotnet-version }}
     secrets: inherit
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name == 'main' && 'production' || 'development' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - revit-year: "2026"
+            dotnet-version: "8.0.x"
+            engine: "Autodesk.Revit+2026"
+          - revit-year: "2027"
+            dotnet-version: "10.0.x"
+            engine: "Autodesk.Revit+2027"
     env:
       APS_CLIENT_ID: ${{ secrets.APS_CLIENT_ID }}
       APS_CLIENT_SECRET: ${{ secrets.APS_CLIENT_SECRET }}
       DA_BASE_URL: https://developer.api.autodesk.com/da/us-east/v3
+      APPBUNDLE_NAME: RevitMcpTools${{ matrix.revit-year }}
+      ENGINE: ${{ matrix.engine }}
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: appbundle
+          name: appbundle-${{ matrix.revit-year }}
 
       - name: Determine alias
         run: |
@@ -61,7 +86,7 @@ jobs:
       - name: Check if AppBundle exists
         run: |
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            "$DA_BASE_URL/appbundles/RevitMcpTools" \
+            "$DA_BASE_URL/appbundles/$APPBUNDLE_NAME" \
             -H "Authorization: Bearer $APS_TOKEN")
           echo "APPBUNDLE_STATUS=$HTTP_STATUS" >> "$GITHUB_ENV"
 
@@ -73,14 +98,14 @@ jobs:
               "$DA_BASE_URL/appbundles" \
               -H "Authorization: Bearer $APS_TOKEN" \
               -H "Content-Type: application/json" \
-              -d "{\"id\":\"RevitMcpTools\",\"engine\":\"Autodesk.Revit+2027\",\"description\":\"deploy $GITHUB_SHA\"}")
+              -d "{\"id\":\"$APPBUNDLE_NAME\",\"engine\":\"$ENGINE\",\"description\":\"deploy $GITHUB_SHA\"}")
           else
             echo "Creating new AppBundle version..."
             RESPONSE=$(curl -s -X POST \
-              "$DA_BASE_URL/appbundles/RevitMcpTools/versions" \
+              "$DA_BASE_URL/appbundles/$APPBUNDLE_NAME/versions" \
               -H "Authorization: Bearer $APS_TOKEN" \
               -H "Content-Type: application/json" \
-              -d "{\"engine\":\"Autodesk.Revit+2027\",\"description\":\"deploy $GITHUB_SHA\"}")
+              -d "{\"engine\":\"$ENGINE\",\"description\":\"deploy $GITHUB_SHA\"}")
           fi
 
           VERSION=$(echo "$RESPONSE" | jq -r '.version')
@@ -119,7 +144,7 @@ jobs:
       - name: Create or update alias
         run: |
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            -X PATCH "$DA_BASE_URL/appbundles/RevitMcpTools/aliases/$ALIAS" \
+            -X PATCH "$DA_BASE_URL/appbundles/$APPBUNDLE_NAME/aliases/$ALIAS" \
             -H "Authorization: Bearer $APS_TOKEN" \
             -H "Content-Type: application/json" \
             -d "{\"version\":$VERSION}")
@@ -127,7 +152,7 @@ jobs:
           if [ "$HTTP_STATUS" = "404" ]; then
             echo "Alias does not exist, creating..."
             curl -s -X POST \
-              "$DA_BASE_URL/appbundles/RevitMcpTools/aliases" \
+              "$DA_BASE_URL/appbundles/$APPBUNDLE_NAME/aliases" \
               -H "Authorization: Bearer $APS_TOKEN" \
               -H "Content-Type: application/json" \
               -d "{\"id\":\"$ALIAS\",\"version\":$VERSION}" | jq .
@@ -140,7 +165,7 @@ jobs:
 
       - name: Log AppBundle ID
         run: |
-          APPBUNDLE_ID="$NICKNAME.RevitMcpTools+$ALIAS"
+          APPBUNDLE_ID="$NICKNAME.$APPBUNDLE_NAME+$ALIAS"
           echo "## Deploy Summary" >> "$GITHUB_STEP_SUMMARY"
           echo "- **AppBundle:** \`$APPBUNDLE_ID\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Version:** $VERSION" >> "$GITHUB_STEP_SUMMARY"
