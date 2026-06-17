@@ -17,7 +17,9 @@ namespace RevitMcpTools.Utils
             return builder
                 .AddTool<CreateModelTool>()
                 .AddTool<LinkModelsTool>()
-                .AddTool<CreateSheetsTool>();
+                .AddTool<CreateSheetsTool>()
+                .AddTool<SetWallCommentsTool>()
+                .AddTool<ExportWallTypesTool>();
         }
     }
 }
