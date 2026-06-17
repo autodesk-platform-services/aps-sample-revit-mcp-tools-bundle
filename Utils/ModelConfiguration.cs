@@ -1,7 +1,15 @@
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace RevitMcpTools.Utils
 {
+    public enum OpenOption
+    {
+        OpenAllWorksets,
+        CloseAllWorksets,
+        CloseWorksetsWithRevitLinks
+    }
+
     /// <summary>
     /// Configuration for the Revit model to open and operate on
     /// </summary>
@@ -21,6 +29,10 @@ namespace RevitMcpTools.Utils
 
         [JsonProperty(PropertyName = "save", Required = Required.Default)]
         public bool Save { get; set; } = true;
+
+        [JsonProperty(PropertyName = "openOption", Required = Required.Default)]
+        [JsonConverter(typeof(StringEnumConverter))]
+        public OpenOption OpenOption { get; set; } = OpenOption.OpenAllWorksets;
 
         public static ModelConfiguration Parse(string jsonPath)
         {

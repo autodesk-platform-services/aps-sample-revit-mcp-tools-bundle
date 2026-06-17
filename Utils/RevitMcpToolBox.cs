@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Autodesk.Revit.DB;
 using DesignAutomationFramework;
 
@@ -48,6 +49,7 @@ namespace RevitMcpTools.Utils
 
                 Console.WriteLine($"*** Model - Region: {modelConfig.Region}, ProjectGuid: {modelConfig.ProjectGuid}, ModelGuid: {modelConfig.ModelGuid} ***");
                 Console.WriteLine($"*** Tool requested: {modelConfig.ToolName} ***");
+                Console.WriteLine($"*** Open option requested: {modelConfig.OpenOption} ***");
 
                 // 2. Open the model
                 var cloudModelPath = ModelPathUtils.ConvertCloudGUIDsToCloudPath(
@@ -56,8 +58,115 @@ namespace RevitMcpTools.Utils
                     modelConfig.ModelGuid);
 
                 Console.WriteLine("*** Opening Revit Cloud Model... ***");
-                doc = _data.RevitApp.OpenDocumentFile(cloudModelPath, new OpenOptions());
-                
+
+                switch (modelConfig.OpenOption)
+                {
+                    case OpenOption.CloseAllWorksets:
+                        {
+                            var openOptions = new OpenOptions();
+                            openOptions.SetOpenWorksetsConfiguration(new WorksetConfiguration(WorksetConfigurationOption.CloseAllWorksets));
+                            Console.WriteLine("*** Opening with all worksets closed. ***");
+
+                            Stopwatch closeAllStopwatch = Stopwatch.StartNew();
+                            doc = _data.RevitApp.OpenDocumentFile(cloudModelPath, openOptions);
+                            closeAllStopwatch.Stop();
+
+                            Console.WriteLine($"*** Open with CloseAllWorksets completed in {closeAllStopwatch.Elapsed.TotalSeconds:F2} seconds. ***");
+                            break;
+                        }
+                    case OpenOption.CloseWorksetsWithRevitLinks:
+                        {
+                            Stopwatch closeLinksTotalStopwatch = Stopwatch.StartNew();
+
+                            // First open: all worksets closed
+                            var firstOpenOptions = new OpenOptions();
+                            firstOpenOptions.SetOpenWorksetsConfiguration(new WorksetConfiguration(WorksetConfigurationOption.CloseAllWorksets));
+                            Console.WriteLine("*** First open with all worksets closed. ***");
+
+                            Stopwatch firstOpenStopwatch = Stopwatch.StartNew();
+                            doc = _data.RevitApp.OpenDocumentFile(cloudModelPath, firstOpenOptions);
+                            firstOpenStopwatch.Stop();
+
+                            if (doc == null)
+                            {
+                                Console.WriteLine("*** Failed to open model (first pass). ***");
+                                return false;
+                            }
+
+                            Console.WriteLine($"*** First open completed in {firstOpenStopwatch.Elapsed.TotalSeconds:F2} seconds. ***");
+
+                            var allUserWorksets = new FilteredWorksetCollector(doc)
+                                .OfKind(WorksetKind.UserWorkset)
+                                .ToWorksets()
+                                .ToList();
+
+                            var linkWorksetIds = new HashSet<int>();
+                            var linkTypes = new FilteredElementCollector(doc)
+                                .OfClass(typeof(RevitLinkType))
+                                .Cast<RevitLinkType>()
+                                .ToList();
+
+                            Console.WriteLine($"*** Revit link types found: {linkTypes.Count} ***");
+
+                            foreach (var linkType in linkTypes)
+                            {
+                                int worksetId = linkType.get_Parameter(BuiltInParameter.ELEM_PARTITION_PARAM)?.AsInteger() ?? -1;
+                                linkWorksetIds.Add(worksetId);
+
+                                string worksetName = allUserWorksets.FirstOrDefault(ws => ws.Id.IntegerValue == worksetId)?.Name
+                                    ?? $"Id {worksetId}";
+
+                                Console.WriteLine($"*** Revit link type '{linkType.Name}' belongs to workset '{worksetName}' ({worksetId}). ***");
+                            }
+
+                            var worksetsWithoutLinks = allUserWorksets
+                                .Where(ws => !linkWorksetIds.Contains(ws.Id.IntegerValue))
+                                .Select(ws => ws.Id)
+                                .ToList();
+
+                            Console.WriteLine($"*** Worksets without links: {worksetsWithoutLinks.Count} ***");
+
+                            // Close first-pass document without save
+                            doc.Close(false);
+                            doc = null;
+
+                            // Second open: only worksets without links
+                            var secondOpenOptions = new OpenOptions();
+                            var secondConfig = new WorksetConfiguration(WorksetConfigurationOption.CloseAllWorksets);
+                            if (worksetsWithoutLinks.Count > 0)
+                            {
+                                secondConfig.Open(worksetsWithoutLinks);
+                            }
+
+                            secondOpenOptions.SetOpenWorksetsConfiguration(secondConfig);
+                            Console.WriteLine("*** Second open with only worksets without links. ***");
+
+                            Stopwatch secondOpenStopwatch = Stopwatch.StartNew();
+                            doc = _data.RevitApp.OpenDocumentFile(cloudModelPath, secondOpenOptions);
+                            secondOpenStopwatch.Stop();
+
+                            if (doc == null)
+                            {
+                                Console.WriteLine("*** Failed to open model (second pass). ***");
+                                return false;
+                            }
+
+                            closeLinksTotalStopwatch.Stop();
+                            Console.WriteLine($"*** Second open completed in {secondOpenStopwatch.Elapsed.TotalSeconds:F2} seconds. ***");
+                            Console.WriteLine($"*** Open with CloseWorksetsWithRevitLinks total completed in {closeLinksTotalStopwatch.Elapsed.TotalSeconds:F2} seconds. ***");
+                            break;
+                        }
+                    case OpenOption.OpenAllWorksets:
+                    default:
+                        {
+                            Stopwatch openAllStopwatch = Stopwatch.StartNew();
+                            doc = _data.RevitApp.OpenDocumentFile(cloudModelPath, new OpenOptions());
+                            openAllStopwatch.Stop();
+                            Console.WriteLine($"*** Open with OpenAllWorksets completed in {openAllStopwatch.Elapsed.TotalSeconds:F2} seconds. ***");
+                            break;
+                        }
+                }
+
                 if (doc == null)
                 {
                     Console.WriteLine("*** Failed to open model. ***");
@@ -76,7 +185,7 @@ namespace RevitMcpTools.Utils
 
                 IRevitMcpTool tool = toolFactory();
                 Console.WriteLine($"*** Executing tool: {modelConfig.ToolName} ***");
-                
+
                 // 4. Execute the tool with the opened document
                 bool success = tool.Execute(_data, doc);
 
@@ -84,7 +193,7 @@ namespace RevitMcpTools.Utils
                 if (success && modelConfig.Save)
                 {
                     Console.WriteLine("*** Saving model... ***");
-                    
+
                     if (doc.IsWorkshared)
                     {
                         SynchronizeWithCentralOptions swc = new();
